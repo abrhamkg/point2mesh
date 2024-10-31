@@ -17,7 +17,7 @@ print('device: {}'.format(device))
 
 # initial mesh
 mesh = Mesh(opts.initial_mesh, device=device, hold_history=True)
-
+# mesh = mesh.to(device)
 # input point cloud
 input_xyz, input_normals = utils.read_pts(opts.input_pc)
 # normalize point cloud based on initial mesh

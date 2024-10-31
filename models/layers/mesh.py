@@ -334,6 +334,7 @@ class PartMesh:
         :param vs_groups: tensor the size of vs that contains the submesh index from 0 upto number_of_sub_meshes - 1
         :param num_parts: number of parts to seperate the main_mesh into
         """
+        # device = 
         self.main_mesh = main_mesh
         if vs_groups is not None: #TODO is this neccesary?
             self.vs_groups = vs_groups
@@ -357,8 +358,9 @@ class PartMesh:
             vs_index = torch.tensor(self.vs_bfs(vs_index.tolist(), self.main_mesh.faces.tolist(), bfs_depth),
                                     dtype=vs_index.dtype).to(vs_index.device)
             m, vs_index = self.main_mesh.submesh(vs_index)
+            # pdb.set_trace()
             self.sub_mesh.append(m)
-            self.sub_mesh_index.append(vs_index)
+            self.sub_mesh_index.append(vs_index.to(m.device))
             self.init_verts.append(m.vs.clone().detach())
 
         self.vs_groups = tmp_vs_groups
@@ -367,8 +369,11 @@ class PartMesh:
         vse = self.vs_e_dict(self.main_mesh.edges)
         self.sub_mesh_edge_index = []
         for i in range(self.n_submeshes):
+            # device = self.main_.device
             mask = torch.zeros(self.main_mesh.edges.shape[0]).long()
             for face in self.sub_mesh[i].faces:
+                mask = mask.to(face.device)
+                # pdb.set_trace()
                 face = self.sub_mesh_index[i][face].to(face.device).long()
                 face = face.to(self.sub_mesh_index[i].device).long()
                 face = self.sub_mesh_index[i][face]
@@ -435,7 +440,6 @@ class PartMesh:
         vs_mask = torch.zeros(mesh.vs.shape[0], device=device)
         vs_mask[vs_index] = 1
         faces_mask = vs_mask[mesh.faces].sum(dim=-1) > 0
-        pdb.set_trace()
         new_faces = mesh.faces[faces_mask].clone()
         all_verts = new_faces.view(-1)
         new_vs_mask = torch.zeros(mesh.vs.shape[0]).long().to(all_verts.device)
@@ -444,8 +448,9 @@ class PartMesh:
         new_vs = mesh.vs[new_vs_index, :].clone()
         vs_mask = torch.zeros(mesh.vs.shape[0])
         vs_mask[new_vs_index] = 1
-        cummusum = torch.cumsum(1 - vs_mask, dim=0)
+        cummusum = torch.cumsum(1 - vs_mask, dim=0).to(device)
         new_faces -= cummusum[new_faces].to(new_faces.device).long()
+        # pdb.set_trace()
         m = Mesh.from_tensor(mesh, new_vs.detach(), new_faces.detach(), gfmm=False)
         return m, new_vs_index
 
