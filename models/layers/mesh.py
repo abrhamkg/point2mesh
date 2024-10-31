@@ -7,6 +7,7 @@ from pathlib import Path
 import pickle
 from pytorch3d.ops.knn import knn_gather, knn_points
 
+import pdb
 
 class Mesh:
 
@@ -430,9 +431,11 @@ class PartMesh:
         :param mesh: the mesh to sub
         :return: the new submesh
         """
-        vs_mask = torch.zeros(mesh.vs.shape[0])
+        device = mesh.faces.device
+        vs_mask = torch.zeros(mesh.vs.shape[0], device=device)
         vs_mask[vs_index] = 1
         faces_mask = vs_mask[mesh.faces].sum(dim=-1) > 0
+        pdb.set_trace()
         new_faces = mesh.faces[faces_mask].clone()
         all_verts = new_faces.view(-1)
         new_vs_mask = torch.zeros(mesh.vs.shape[0]).long().to(all_verts.device)
